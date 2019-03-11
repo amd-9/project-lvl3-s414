@@ -1,0 +1,14 @@
+# Ignore node_modules folder
+node_modules/
+
+# Ignore jest coverage results folder
+coverage/
+
+# Ignore dist folder
+dist/
+
+# Ignore files with .log extension
+*.log
+
+# MAC Desktop config file
+.DS_Store
