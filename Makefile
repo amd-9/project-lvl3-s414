@@ -1,12 +1,15 @@
+install:
+	npm install
+
+develop:
+	npx webpack-dev-server
+
 build:
 	rm -rf dist
-	npm run build
+	NODE_ENV=production npx webpack
 
 test:
 	npm test
-
-test-debug:
-	npm run test-debug;
 
 test-coverage:
 	npm run test-coverage
