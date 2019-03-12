@@ -10,12 +10,34 @@
             <form>
                 <div class="form-group">
                     <label for="">RSS Feed</label>
-                    <input type="text" class="form-control" id="txtRSSFeed" placeholder="Please enter RSS feed URI to add">
+                    <input type="text" class="form-control" id="txtRSSFeedURI" placeholder="Please enter a valid RSS feed URI to add">
                 </div>
                 <div class="form-group">
-                    <button type="button" class="btn btn-primary">Add</button>
+                    <button type="button" id="btnAddRSSFeed" class="btn btn-primary">Add</button>
                 </div>
             </form>
+        </div>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        Feeds
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-body">
+                        Items
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div id="rssFeeds" class="col-md-4">
+            </div>
+            <div id="rssItems" class="col-md-8">
+            </div>
         </div>
     </main>
   </body>
