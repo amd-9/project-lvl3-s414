@@ -30,9 +30,20 @@ const renderLinkElement = (linkData) => {
   cardLink.classList.add('card-link');
   cardLink.setAttribute('href', link);
   cardLink.textContent = title;
+  const cardButton = document.createElement('button');
+  cardButton.setAttribute('type', 'button');
+  cardButton.setAttribute('data-toggle', 'modal');
+  cardButton.setAttribute('data-target', '#itemModal');
+  cardButton.textContent = 'Details';
+  cardButton.classList.add('btn', 'btn-primary', 'btn-item-details');
+
+  $(cardButton).click(() => {
+    $('#item-details-body').text(linkData.description);
+  });
 
   card.appendChild(cardBody);
   cardBody.appendChild(cardLink);
+  cardBody.appendChild(cardButton);
 
   return card;
 };
@@ -106,6 +117,7 @@ export default () => {
       newFeed.items = items.map(item => ({
         title: xpath.select('string(./title)', item),
         link: xpath.select('string(./link)', item),
+        description: xpath.select('string(./description)', item),
       }));
 
       newFeed.complete();
