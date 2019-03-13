@@ -1,133 +1,88 @@
 import { watch } from 'melanke-watchjs';
 import validator from 'validator';
-import $ from 'jquery';
-import xpath from 'xpath';
 import RSSFeed from './RSSFeed';
-
-const createCardElement = (cardData) => {
-  const { title } = cardData;
-  const card = document.createElement('div');
-  card.classList.add('card');
-  const cardBody = document.createElement('div');
-  cardBody.classList.add('card-body');
-  const cardTitle = document.createElement('div');
-  cardTitle.classList.add('card-title');
-  cardTitle.textContent = title;
-
-  card.appendChild(cardBody);
-  cardBody.appendChild(cardTitle);
-
-  return card;
-};
-
-const renderLinkElement = (linkData) => {
-  const { title, link } = linkData;
-  const card = document.createElement('div');
-  card.classList.add('card');
-  const cardBody = document.createElement('div');
-  cardBody.classList.add('card-body');
-  const cardLink = document.createElement('a');
-  cardLink.classList.add('card-link');
-  cardLink.setAttribute('href', link);
-  cardLink.textContent = title;
-  const cardButton = document.createElement('button');
-  cardButton.setAttribute('type', 'button');
-  cardButton.setAttribute('data-toggle', 'modal');
-  cardButton.setAttribute('data-target', '#itemModal');
-  cardButton.textContent = 'Details';
-  cardButton.classList.add('btn', 'btn-primary', 'btn-item-details');
-
-  $(cardButton).click(() => {
-    $('#item-details-body').text(linkData.description);
-  });
-
-  card.appendChild(cardBody);
-  cardBody.appendChild(cardLink);
-  cardBody.appendChild(cardButton);
-
-  return card;
-};
-
-const renderFeeds = (feeds) => {
-  const rssFeeds = $('#rssFeeds');
-  const rssItems = $('#rssItems');
-
-  rssFeeds.empty();
-  rssItems.empty();
-
-  feeds.forEach((feed) => {
-    if (feed.is('completed')) {
-      rssFeeds.append(createCardElement(feed));
-      feed.items.forEach((item) => {
-        rssItems.append(renderLinkElement(item));
-      });
-    }
-  });
-};
-
+import htmlRenderer from './renderer';
+import parseRSS from './rss-parser';
 
 export default () => {
   const state = {
     rssURI: {
-      isValid: true,
+      value: null,
+      isValid: false,
     },
     rssFeeds: [],
     feedsCount: 0,
+    message: null,
   };
 
+
+  const rssFeedUriElement = document.querySelector('#txtRSSFeedURI');
+  const addRSSFeedElement = document.querySelector('#btnAddRSSFeed');
+
   watch(state, 'rssURI', () => {
-    $('#txtRSSFeedURI').toggleClass('is-invalid');
+    if (!state.rssURI.isValid) {
+      rssFeedUriElement.classList.add('is-invalid');
+      addRSSFeedElement.disabled = true;
+    } else {
+      rssFeedUriElement.classList.remove('is-invalid');
+      addRSSFeedElement.disabled = false;
+    }
+
+    if (!state.rssURI.value) {
+      rssFeedUriElement.value = '';
+    }
   });
 
   watch(state, 'feedsCount', () => {
-    renderFeeds(state.rssFeeds);
+    htmlRenderer.renderFeeds(state.rssFeeds);
   });
 
-  $('#txtRSSFeedURI').on('input', function handler() {
-    const val = $(this).val();
-    const result = validator.isURL(val);
-    state.rssURI.isValid = result;
+  watch(state, 'message', () => {
+    if (state.message) {
+      htmlRenderer.renderToast(state.message);
+      state.message = null;
+    }
   });
 
-  $('#btnAddRSSFeed').click(() => {
-    if (!state.rssURI.isValid || $('#txtRSSFeedURI').val() === '') {
+  rssFeedUriElement.addEventListener('input', (e) => {
+    state.rssURI.value = e.target.value;
+    state.rssURI.isValid = validator.isURL(state.rssURI.value);
+  });
+
+  addRSSFeedElement.addEventListener('click', () => {
+    if (!state.rssURI.isValid) {
       state.rssURI.isValid = false;
       return;
     }
-    const newFeed = new RSSFeed($('#txtRSSFeedURI').val());
+    const newFeed = new RSSFeed(state.rssURI.value);
 
     newFeed.add();
 
     if (state.rssFeeds.find(feed => feed.uri === newFeed.uri)) {
       newFeed.cancel();
-      $('#txtRSSFeedURI').toggleClass('is-invalid');
+      state.rssURI.isValid = false;
+      state.message = { type: 'Error', text: 'RSS feed already added!' };
       return;
     }
 
+    state.message = { type: 'Info', text: `Requesting RSS Feed at ${state.rssURI.value}` };
+
     const request = newFeed.request();
     request.then((response) => {
-      const parser = new DOMParser();
-      const feedDoc = parser.parseFromString(response.data, 'application/xml');
-      const title = xpath.select('string(//title)', feedDoc);
-      const description = xpath.select('string(//description)', feedDoc);
-      newFeed.title = title;
-      newFeed.description = description;
-
-      const items = xpath.select('//item', feedDoc);
-      newFeed.items = items.map(item => ({
-        title: xpath.select('string(./title)', item),
-        link: xpath.select('string(./link)', item),
-        description: xpath.select('string(./description)', item),
-      }));
-
+      const rssData = parseRSS(response.data);      
+      newFeed.title = rssData.title;
+      newFeed.description = rssData.description;
+      newFeed.items = rssData.items;
       newFeed.complete();
-      $('#txtRSSFeedURI').val('');
+
+      state.message = { type: 'Success', text: `RSS Feed at ${state.rssURI.value} added` };
+      state.rssURI.value = null;
       state.rssFeeds.push(newFeed);
       state.feedsCount = state.rssFeeds.length;
     })
       .catch((error) => {
-        console.log(`Error during request to RSS feed URI ${error}`);
-        $('#txtRSSFeedURI').toggleClass('is-invalid');
+        state.message = { type: 'Error', text: error };
+        state.rssURI.isValid = false;
         newFeed.cancel();
       });
   });
