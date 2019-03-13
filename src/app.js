@@ -69,7 +69,7 @@ export default () => {
 
     const request = newFeed.request();
     request.then((response) => {
-      const rssData = parseRSS(response.data);      
+      const rssData = parseRSS(response.data);
       newFeed.title = rssData.title;
       newFeed.description = rssData.description;
       newFeed.items = rssData.items;
