@@ -21,24 +21,26 @@ export default class RSSReaderController {
       }).catch((error) => {
         this.rssReaderModel.rssURI.isValid = false;
         this.rssReaderModel.message = { type: 'Error', text: error.message };
-        this.rssReaderView.validate(this.rssReaderModel);
       });
     };
 
     this.rssReaderView.rssFeedUriInput = (e) => {
-      if (e.target.value === '') {
-        this.rssReaderView.resetInputForm();
-        return;
-      }
+      this.rssReaderModel.rssURI.state = e.target.value === '' ? 'pristine' : 'dirty';
       this.rssReaderModel.rssURI.value = e.target.value;
       this.rssReaderModel.rssURI.isValid = validator.isURL(e.target.value);
-      this.rssReaderView.validate(this.rssReaderModel);
     };
-
+    
     this.rssReaderView.initialize();
+    this.setWatchers();
+  }
 
+  setWatchers() {
     watch(this.rssReaderModel, 'message', () => {
       this.rssReaderView.render(this.rssReaderModel);
+    });
+
+    watch(this.rssReaderModel, 'rssURI', () => {
+      this.rssReaderView.validate(this.rssReaderModel);
     });
   }
 

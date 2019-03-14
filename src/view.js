@@ -28,9 +28,17 @@ export default class RSSReaderView {
     if (viewModel.message) {
       htmlRenderer.renderToast(viewModel.message);
     }
+    if (viewModel.rssURI.state === 'pristine') {
+      this.resetInputForm();
+    }
   }
 
   validate(viewModel) {
+    if (viewModel.rssURI.state === 'pristine') {
+      this.resetInputForm();
+      return;
+    }
+
     if (viewModel.rssURI.isValid) {
       this.rssFeedUriElement.classList.remove('is-invalid');
       this.addRSSFeedElement.disabled = false;

@@ -3,6 +3,7 @@ export default class RSSReaderModel {
     this.rssURI = {
       value: null,
       isValid: false,
+      state: 'pristine',
     };
     this.rssFeeds = [];
     this.message = null;
