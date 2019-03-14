@@ -29,7 +29,7 @@ export default class RSSReaderController {
       this.rssReaderModel.rssURI.value = e.target.value;
       this.rssReaderModel.rssURI.isValid = validator.isURL(e.target.value);
     };
-    
+
     this.rssReaderView.initialize();
     this.setWatchers();
   }
