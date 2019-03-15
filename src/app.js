@@ -6,8 +6,9 @@ import parseRSS from './rss-parser';
 
 export default () => {
   const state = {
+    blockInput: false,
     rssURI: {
-      state: 'pristine',
+      isPrestine: false,
       value: null,
       isValid: false,
     },
@@ -19,17 +20,26 @@ export default () => {
   const rssFeedUriElement = document.querySelector('#txtRSSFeedURI');
   const addRSSFeedElement = document.querySelector('#btnAddRSSFeed');
 
+  watch(state, 'blockInput', () => {
+    if (state.blockInput) {
+      addRSSFeedElement.disabled = true;
+    }
+  });
+
   watch(state, 'rssURI', () => {
+    if (state.rssURI.isPrestine) {
+      rssFeedUriElement.value = '';
+      rssFeedUriElement.classList.remove('is-invalid');
+      addRSSFeedElement.disabled = true;
+      return;
+    }
+
     if (!state.rssURI.isValid) {
       rssFeedUriElement.classList.add('is-invalid');
       addRSSFeedElement.disabled = true;
     } else {
       rssFeedUriElement.classList.remove('is-invalid');
       addRSSFeedElement.disabled = false;
-    }
-
-    if (!state.rssURI.value) {
-      rssFeedUriElement.value = '';
     }
   });
 
@@ -44,6 +54,12 @@ export default () => {
   });
 
   rssFeedUriElement.addEventListener('input', (e) => {
+    if (e.target.value === '') {
+      state.rssURI.isPrestine = true;
+      return;
+    }
+
+    state.rssURI.isPrestine = false;
     state.rssURI.value = e.target.value;
     state.rssURI.isValid = validator.isURL(state.rssURI.value);
   });
@@ -53,6 +69,7 @@ export default () => {
       state.rssURI.isValid = false;
       return;
     }
+    state.blockInput = true;
     const newFeed = new RSSFeed(state.rssURI.value);
 
     newFeed.add();
@@ -75,7 +92,7 @@ export default () => {
       newFeed.complete();
 
       state.message = { type: 'Success', text: `RSS Feed at ${state.rssURI.value} added` };
-      state.rssURI.value = null;
+      state.rssURI.isPrestine = true;
       state.rssFeeds.push(newFeed);
       state.feedsCount = state.rssFeeds.length;
     })
@@ -83,6 +100,9 @@ export default () => {
         state.message = { type: 'Error', text: error };
         state.rssURI.isValid = false;
         newFeed.cancel();
+      })
+      .finally(() => {
+        state.blockInput = false;
       });
   });
 };
