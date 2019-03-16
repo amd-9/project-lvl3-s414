@@ -20,6 +20,7 @@ export default (rssXMLData) => {
       title: item.querySelector('title').textContent,
       link: item.querySelector('link').textContent,
       description: item.querySelector('description').textContent,
+      pubDate: new Date(item.querySelector('pubDate').textContent),
     })),
   };
 };

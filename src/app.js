@@ -4,6 +4,8 @@ import RSSFeed from './RSSFeed';
 import htmlRenderer from './renderer';
 import parseRSS from './rss-parser';
 
+const feedUpdateInterval = 5000;
+
 export default () => {
   const state = {
     blockInput: false,
@@ -19,6 +21,23 @@ export default () => {
 
   const rssFeedUriElement = document.querySelector('#txtRSSFeedURI');
   const addRSSFeedElement = document.querySelector('#btnAddRSSFeed');
+
+  const updateFeed = (feed) => {
+    console.log(`Updating feed: ${feed.uri}`);
+    const feedMaxPubDate = Math.max(feed.items.map(item => item.pubDate));
+    feed.update();
+    const request = feed.request();
+    request.then((response) => {
+      const updatedRSSData = parseRSS(response.data);
+      const newItems = updatedRSSData.items.filter(item => item.pubDate > feedMaxPubDate);
+      feed.addItems(newItems);
+      feed.complete();
+      setTimeout(updateFeed, feedUpdateInterval);
+    })
+      .catch((error) => {
+        state.message = { type: 'Error', text: error };
+      });
+  };
 
   watch(state, 'blockInput', () => {
     if (state.blockInput) {
@@ -88,13 +107,14 @@ export default () => {
       const rssData = parseRSS(response.data);
       newFeed.title = rssData.title;
       newFeed.description = rssData.description;
-      newFeed.items = rssData.items;
+      newFeed.addItems(rssData.items);
       newFeed.complete();
 
       state.message = { type: 'Success', text: `RSS Feed at ${state.rssURI.value} added` };
       state.rssURI.isPrestine = true;
       state.rssFeeds.push(newFeed);
       state.feedsCount = state.rssFeeds.length;
+      setTimeout(updateFeed, feedUpdateInterval);
     })
       .catch((error) => {
         state.message = { type: 'Error', text: error };

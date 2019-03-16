@@ -6,8 +6,12 @@ export default class RSSFeed {
     this.uri = uri;
     this.title = null;
     this.description = null;
-    this.items = null;
+    this.items = [];
     this._fsm(); // eslint-disable-line
+  }
+
+  addItems(newItems) {
+    this.items = [...newItems, this.items];
   }
 }
 
@@ -17,6 +21,7 @@ StateMachine.factory(RSSFeed, {
     { name: 'add', from: 'init', to: 'pending' },
     { name: 'request', from: 'pending', to: 'requested' },
     { name: 'complete', from: 'requested', to: 'completed' },
+    { name: 'update', form: 'completed', to: 'pending' },
     { name: 'cancel', from: ['pending', 'requested'], to: 'canceled' },
   ],
   methods: {
