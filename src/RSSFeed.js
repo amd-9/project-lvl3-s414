@@ -11,7 +11,7 @@ export default class RSSFeed {
   }
 
   addItems(newItems) {
-    this.items = [...newItems, this.items];
+    this.items = [...newItems, ...this.items];
   }
 }
 
@@ -27,7 +27,7 @@ StateMachine.factory(RSSFeed, {
   methods: {
     onRequest: (lifecycle) => {
       const currentFeed = lifecycle.fsm;
-      const corsProxyPrefix = 'https://cors-anywhere.herokuapp.com/';
+      const corsProxyPrefix = 'https://yacdn.org/proxy/';
       return axios.get(`${corsProxyPrefix}${currentFeed.uri}`);
     },
   },

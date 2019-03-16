@@ -1,5 +1,6 @@
 import { watch } from 'melanke-watchjs';
 import validator from 'validator';
+import _ from 'lodash';
 import RSSFeed from './RSSFeed';
 import htmlRenderer from './renderer';
 import parseRSS from './rss-parser';
@@ -15,16 +16,19 @@ export default () => {
       isValid: false,
     },
     rssFeeds: [],
-    feedsCount: 0,
+    renderToggle: false,
     message: null,
   };
 
   const rssFeedUriElement = document.querySelector('#txtRSSFeedURI');
   const addRSSFeedElement = document.querySelector('#btnAddRSSFeed');
 
+  const togggleRender = () => {
+    state.renderToggle = !state.renderToggle;
+  };
+
   const updateFeed = (feed) => {
-    console.log(`Updating feed: ${feed.uri}`);
-    const feedMaxPubDate = Math.max(feed.items.map(item => item.pubDate));
+    const feedMaxPubDate = _.max(feed.items.map(item => item.pubDate));
     feed.update();
     const request = feed.request();
     request.then((response) => {
@@ -32,7 +36,8 @@ export default () => {
       const newItems = updatedRSSData.items.filter(item => item.pubDate > feedMaxPubDate);
       feed.addItems(newItems);
       feed.complete();
-      setTimeout(updateFeed, feedUpdateInterval);
+      togggleRender();
+      setTimeout(() => updateFeed(feed), feedUpdateInterval);
     })
       .catch((error) => {
         state.message = { type: 'Error', text: error };
@@ -62,7 +67,7 @@ export default () => {
     }
   });
 
-  watch(state, 'feedsCount', () => {
+  watch(state, 'renderToggle', () => {
     htmlRenderer.renderFeeds(state.rssFeeds);
   });
 
@@ -113,8 +118,8 @@ export default () => {
       state.message = { type: 'Success', text: `RSS Feed at ${state.rssURI.value} added` };
       state.rssURI.isPrestine = true;
       state.rssFeeds.push(newFeed);
-      state.feedsCount = state.rssFeeds.length;
-      setTimeout(updateFeed, feedUpdateInterval);
+      togggleRender();
+      setTimeout(() => updateFeed(newFeed), feedUpdateInterval);
     })
       .catch((error) => {
         state.message = { type: 'Error', text: error };
